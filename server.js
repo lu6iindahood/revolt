@@ -7,22 +7,22 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// --- CONFIGURATION ---
+// --- البيانات الخاصة بك ---
 const TELEGRAM_TOKEN = '8105017890:AAGUgv5PhIDq-tSO5mmNiDc4fV8WZWmnxMk';
 const ADMIN_CHAT_ID = '6410887780';
 const PORT = process.env.PORT || 3000;
 
-app.use(express.static('.')); // Serves index.html
+app.use(express.static('.')); 
 app.use(express.json());
 
-let sessions = {}; // Stores socket IDs linked to keys
+let sessions = {}; 
 
 io.on('connection', (socket) => {
     socket.on('check-key', (key) => {
         sessions[key] = socket.id;
 
-        // Send Request to Telegram
-        const text = `⚠️ *New Login Attempt*\n\nKey: \`${key}\`\nStatus: Pending Approval`;
+        // إرسال الإشعار لتليجرام
+        const text = `🔑 *New Login Attempt*\n\nKey: \`${key}\` \nStatus: Waiting for approval...`;
         const keyboard = {
             inline_keyboard: [[
                 { text: "✅ Approve", callback_data: `approve_${key}` },
@@ -35,30 +35,43 @@ io.on('connection', (socket) => {
             text: text,
             parse_mode: 'Markdown',
             reply_markup: keyboard
-        }).catch(err => console.log("Telegram Error:", err.message));
+        }).catch(err => console.log("Telegram Send Error:", err.message));
     });
 });
 
-// Endpoint for Telegram Webhook
+// استقبال ردود الأزرار من تليجرام
 app.post('/telegram-webhook', (req, res) => {
-    if (req.body.callback_query) {
-        const data = req.body.callback_query.data;
+    const callbackQuery = req.body.callback_query;
+    
+    if (callbackQuery) {
+        const data = callbackQuery.data;
         const [action, key] = data.split('_');
         const socketId = sessions[key];
 
         if (socketId) {
             const result = action === 'approve' ? 'approved' : 'rejected';
+            
+            // إرسال النتيجة للمتصفح فوراً عبر Socket.io
             io.to(socketId).emit('admin-response', result);
+            
+            // تحديث رسالة تليجرام لتأكيد الإجراء
+            axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/editMessageText`, {
+                chat_id: ADMIN_CHAT_ID,
+                message_id: callbackQuery.message.message_id,
+                text: `🔑 *Login Result*\n\nKey: \`${key}\` \nStatus: ${action === 'approve' ? '✅ Approved' : '❌ Rejected'}`,
+                parse_mode: 'Markdown'
+            });
+
             delete sessions[key];
         }
-        
-        // Update Telegram Message
+
+        // إغلاق أيقونة التحميل في تليجرام
         axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/answerCallbackQuery`, {
-            callback_query_id: req.body.callback_query.id,
-            text: `Key ${action}d!`
+            callback_query_id: callbackQuery.id,
+            text: `Action: ${action}`
         });
     }
     res.sendStatus(200);
 });
 
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
