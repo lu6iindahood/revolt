@@ -1,5 +1,5 @@
 {
-  "name": "revera-dashboard",
+  "name": "revolt-services",
   "version": "1.0.0",
   "main": "server.js",
   "dependencies": {
