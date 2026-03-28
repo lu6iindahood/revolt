@@ -8,8 +8,8 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // --- CONFIGURATION ---
-const TELEGRAM_TOKEN = 'YOUR_BOT_TOKEN_HERE';
-const ADMIN_CHAT_ID = 'YOUR_TELEGRAM_ID_HERE';
+const TELEGRAM_TOKEN = '8105017890:AAGUgv5PhIDq-tSO5mmNiDc4fV8WZWmnxMk';
+const ADMIN_CHAT_ID = '6410887780';
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static('.')); // Serves index.html
